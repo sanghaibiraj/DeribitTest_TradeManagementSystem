@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD 17)
 add_executable(GoQuant
     src/main.cpp
     src/auth/AuthManager.cpp
+    src/order_management/OrderManager.cpp
 )
 
 # Find and link libcurl

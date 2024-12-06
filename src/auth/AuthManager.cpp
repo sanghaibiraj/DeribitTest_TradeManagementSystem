@@ -37,7 +37,8 @@ std::string AuthManager::authenticate() {
             {"params", {
                 {"grant_type", "client_credentials"},
                 {"client_id", clientId},
-                {"client_secret", clientSecret}
+                {"client_secret", clientSecret},
+                {"scope", "trade:read_write"} // Ensure this matches exactly
             }}
         };
 
