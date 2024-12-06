@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/GoQuant.dir/src/main.cpp.o CMakeFiles/GoQuant.dir/src/auth/AuthManager.cpp.o -o GoQuant  /usr/lib/x86_64-linux-gnu/libcurl.so 

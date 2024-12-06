@@ -1,0 +1,3 @@
+/home/biraj01/github/DeribitTest_TradeManagementSystem/build/CMakeFiles/GoQuant.dir
+/home/biraj01/github/DeribitTest_TradeManagementSystem/build/CMakeFiles/edit_cache.dir
+/home/biraj01/github/DeribitTest_TradeManagementSystem/build/CMakeFiles/rebuild_cache.dir
