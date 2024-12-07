@@ -75,7 +75,7 @@ std::string OrderManager::placeOrder(const std::string& instrument, const std::s
     return response;
 }
 
-// Modify Order
+// modify order
 std::string OrderManager::modifyOrder(const std::string& orderId, double newQuantity, double newPrice) {
     CURL* curl = curl_easy_init();
     std::string response;
@@ -85,19 +85,25 @@ std::string OrderManager::modifyOrder(const std::string& orderId, double newQuan
             // Prepare the URL
             std::string url = "https://test.deribit.com/api/v2/private/edit";
 
-            // Request body
+            // JSON-RPC style request body
             json requestBody = {
-                {"order_id", orderId},
-                {"amount", newQuantity},
-                {"price", newPrice}
+                {"jsonrpc", "2.0"},
+                {"method", "private/edit"},
+                {"id", 1},
+                {"params", {
+                    {"order_id", orderId},
+                    {"amount", newQuantity},
+                    {"price", newPrice}
+                }}
             };
 
             std::string data = requestBody.dump();
+            // std::cout << "Modify Order Request Data: " << data << std::endl;
 
             // Set CURL options
             struct curl_slist* headers = nullptr;
-            headers = curl_slist_append(headers, "Content-Type: application/json");
             headers = curl_slist_append(headers, ("Authorization: Bearer " + accessToken).c_str());
+            headers = curl_slist_append(headers, "Content-Type: application/json");
 
             curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
             curl_easy_setopt(curl, CURLOPT_POST, 1L);
@@ -125,6 +131,7 @@ std::string OrderManager::modifyOrder(const std::string& orderId, double newQuan
 
     return response;
 }
+
 
 // Cancel Order
 std::string OrderManager::cancelOrder(const std::string& orderId) {

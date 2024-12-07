@@ -1,34 +1,53 @@
 #include <iostream>
 #include "auth/AuthManager.h"
 #include "order_management/OrderManager.h"
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 int main() {
-    // Replace with your Deribit Test API credentials
+    // Replace these with your Deribit testnet credentials
     const std::string clientId = "Oo2qw6_G";
     const std::string clientSecret = "ubP2t06RGlV1X4onUoao7q1gdF-aSsZfLycwFfz0-YQ";
 
+    // Step 1: Authenticate
     AuthManager authManager(clientId, clientSecret);
     std::string token = authManager.authenticate();
 
-    if (!token.empty()) {
-        std::cout << "Authentication Successful! Token: " << token << std::endl;
-
-        // Initialize Order Manager
-        OrderManager orderManager(token);
-
-        // Example calculation
-        double contractSize = 10.0; // USD per contract
-        double price = 30000.0;
-        double quantity = contractSize / price; // Rounds to the nearest whole contract
-        std::string response = orderManager.placeOrder("BTC-PERPETUAL", "buy", 10.0, 30000.0);
-
-        // // Place an order
-        // std::string response = orderManager.placeOrder("BTC-PERPETUAL", "buy", 1.0, 30000.0);
-        std::cout << "Order Placement Response: " << response << std::endl;
-
-    } else {
+    if (token.empty()) {
         std::cerr << "Authentication Failed!" << std::endl;
+        return 1;
     }
+
+    std::cout << "Authentication Successful! Token: " << token << std::endl;
+
+    // Step 2: Initialize OrderManager with access token
+    OrderManager orderManager(token);
+
+    // Step 3: Place an order
+    std::string placeOrderResponse = orderManager.placeOrder("BTC-PERPETUAL", "buy", 10, 30000.0);
+    std::cout << "Order Placement Response: " << placeOrderResponse << std::endl;
+
+    // Step 4: Extract order_id from the response
+    // You need to parse the response JSON to extract the order_id
+    std::string orderId;
+    try {
+        auto responseJson = json::parse(placeOrderResponse);
+        if (responseJson.contains("result") && responseJson["result"].contains("order") && responseJson["result"]["order"].contains("order_id")) {
+            orderId = responseJson["result"]["order"]["order_id"];
+            std::cout << "Order ID: " << orderId << std::endl;
+        } else {
+            std::cerr << "Failed to extract order_id from the response." << std::endl;
+            return 1;
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "JSON Parsing Error: " << e.what() << std::endl;
+        return 1;
+    }
+
+    // Step 5: Modify the order
+    std::string modifyOrderResponse = orderManager.modifyOrder(orderId, 20, 31000.0);
+    std::cout << "Modify Order Response: " << modifyOrderResponse << std::endl;
 
     return 0;
 }
