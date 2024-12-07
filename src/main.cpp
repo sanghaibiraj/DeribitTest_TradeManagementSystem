@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <cstdlib>
 #include "auth/AuthManager.h"
 #include "order_management/OrderManager.h"
 #include "account_management/AccountManager.h"
@@ -8,17 +9,34 @@
 
 using json = nlohmann::json;
 
-// Beautify JSON Output Function
+// Clear Console
+void clearConsole() {
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
+}
+
+// Wait for User Input
+void waitForKey() {
+    std::cout << "\nPress any key to continue...";
+    std::cin.ignore(); // Clear the newline character from the input buffer
+    std::cin.get();    // Wait for the user to press a key
+}
+
+// Beautify JSON Output
 std::string beautifyJson(const std::string& jsonString) {
     try {
         json parsedJson = json::parse(jsonString);
         return parsedJson.dump(4); // Indent with 4 spaces
     } catch (const std::exception& e) {
         std::cerr << "Error while beautifying JSON: " << e.what() << std::endl;
-        return jsonString; // Return original string on failure
+        return jsonString;
     }
 }
 
+// Menu Display
 void displayMenu() {
     std::cout << "\n=== Deribit Trading System Menu ===\n";
     std::cout << "1. Place Order\n";
@@ -29,18 +47,15 @@ void displayMenu() {
     std::cout << "6. Get Order Book\n";
     std::cout << "7. Exit\n";
     std::cout << "Enter your choice: ";
-    std::cout << "\n";
 }
 
 int main() {
-    // Step 1: Take API credentials as input
     std::string clientId, clientSecret;
     std::cout << "Enter your Deribit client_id: ";
     std::getline(std::cin, clientId);
     std::cout << "Enter your Deribit client_secret: ";
     std::getline(std::cin, clientSecret);
 
-    // Step 2: Authenticate
     AuthManager authManager(clientId, clientSecret);
     std::string token = authManager.authenticate();
 
@@ -49,19 +64,20 @@ int main() {
         return 1;
     }
 
-    std::cout << "\nAuthentication Successful! Token: " << token << std::endl;
+    std::cout << "Authentication Successful! Token: " << token << std::endl;
 
-    // Initialize managers
     OrderManager orderManager(token);
     AccountManager accountManager(token);
     MarketDataManager marketDataManager;
 
-    // Step 3: Display menu and handle user input
     int choice;
     while (true) {
+        clearConsole();
         displayMenu();
         std::cin >> choice;
         std::cin.ignore(); // Clear the newline character
+
+        clearConsole();
 
         if (choice == 7) {
             std::cout << "Exiting the system. Goodbye!" << std::endl;
@@ -82,7 +98,7 @@ int main() {
                 std::cin >> price;
 
                 std::string response = orderManager.placeOrder(instrument, side, amount, price);
-                std::cout << "Order Placement Response: " << beautifyJson(response) << std::endl;
+                std::cout << "Order Placement Response:\n" << beautifyJson(response) << std::endl;
                 break;
             }
 
@@ -97,7 +113,7 @@ int main() {
                 std::cin >> newPrice;
 
                 std::string response = orderManager.modifyOrder(orderId, newAmount, newPrice);
-                std::cout << "Modify Order Response: " << beautifyJson(response) << std::endl;
+                std::cout << "Modify Order Response:\n" << beautifyJson(response) << std::endl;
                 break;
             }
 
@@ -107,19 +123,19 @@ int main() {
                 std::cin >> orderId;
 
                 std::string response = orderManager.cancelOrder(orderId);
-                std::cout << "Cancel Order Response: " << beautifyJson(response) << std::endl;
+                std::cout << "Cancel Order Response:\n" << beautifyJson(response) << std::endl;
                 break;
             }
 
             case 4: { // Get Account Summary
                 std::string response = accountManager.getAccountSummary();
-                std::cout << "Account Summary: " << beautifyJson(response) << std::endl;
+                std::cout << "Account Summary:\n" << beautifyJson(response) << std::endl;
                 break;
             }
 
             case 5: { // Get Current Positions
                 std::string response = accountManager.getPositions();
-                std::cout << "Current Positions: " << beautifyJson(response) << std::endl;
+                std::cout << "Current Positions:\n" << beautifyJson(response) << std::endl;
                 break;
             }
 
@@ -129,13 +145,15 @@ int main() {
                 std::cin >> instrument;
 
                 std::string response = marketDataManager.getOrderBook(instrument);
-                std::cout << "Order Book: " << beautifyJson(response) << std::endl;
+                std::cout << "Order Book:\n" << beautifyJson(response) << std::endl;
                 break;
             }
 
             default:
                 std::cerr << "Invalid choice. Please try again." << std::endl;
         }
+
+        waitForKey(); // Wait for user input and clear console for the next menu
     }
 
     return 0;
