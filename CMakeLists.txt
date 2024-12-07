@@ -9,6 +9,8 @@ add_executable(GoQuant
     src/main.cpp
     src/auth/AuthManager.cpp
     src/order_management/OrderManager.cpp
+    src/account_management/AccountManager.cpp
+    src/market_data/MarketDataManager.cpp
 )
 
 # Find and link libcurl

@@ -1,8 +1,10 @@
 #include <iostream>
 #include "auth/AuthManager.h"
 #include "order_management/OrderManager.h"
-#include <nlohmann/json.hpp>
+#include "account_management/AccountManager.h"
+#include "market_data/MarketDataManager.h"
 
+#include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
 int main() {
@@ -51,6 +53,11 @@ int main() {
     // Step 6: Cancel the order
     std::string cancelOrderResponse = orderManager.cancelOrder(orderId);
     std::cout << "Cancel Order Response: " << cancelOrderResponse << std::endl;
+
+    // Use AccountManager
+    AccountManager accountManager(token);
+    std::cout << "Account Summary: " << accountManager.getAccountSummary() << std::endl;
+    std::cout << "Positions: " << accountManager.getPositions() << std::endl;
 
     return 0;
 }
