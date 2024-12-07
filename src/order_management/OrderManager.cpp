@@ -60,9 +60,10 @@ std::string OrderManager::placeOrder(const std::string& instrument, const std::s
 
             if (res != CURLE_OK) {
                 std::cerr << "CURL Error: " << curl_easy_strerror(res) << std::endl;
-            } else {
-                std::cout << "Place Order Response: " << response << std::endl;
-            }
+            } 
+            // else {
+                // std::cout << "Place Order Response: " << response << std::endl;
+            // }
 
             // Cleanup
             curl_slist_free_all(headers);
@@ -117,9 +118,10 @@ std::string OrderManager::modifyOrder(const std::string& orderId, double newQuan
 
             if (res != CURLE_OK) {
                 std::cerr << "CURL Error: " << curl_easy_strerror(res) << std::endl;
-            } else {
-                std::cout << "Modify Order Response: " << response << std::endl;
-            }
+            } 
+            // else {
+            //     std::cout << "Modify Order Response: " << response << std::endl;
+            // }
 
             // Cleanup
             curl_slist_free_all(headers);
@@ -173,9 +175,10 @@ std::string OrderManager::cancelOrder(const std::string& orderId) {
 
             if (res != CURLE_OK) {
                 std::cerr << "CURL Error: " << curl_easy_strerror(res) << std::endl;
-            } else {
-                std::cout << "Cancel Order Response: " << response << std::endl;
-            }
+            } 
+            // else {
+            //     std::cout << "Cancel Order Response: " << response << std::endl;
+            // }
 
             // Cleanup
             curl_slist_free_all(headers);

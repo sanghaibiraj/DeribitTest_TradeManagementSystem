@@ -82,7 +82,7 @@ std::string AuthManager::authenticate() {
 
         if (jsonResponse.contains("result") && jsonResponse["result"].contains("access_token")) {
             accessToken = jsonResponse["result"]["access_token"];
-            std::cout << "Access Token: " << accessToken << std::endl;
+            // std::cout << "Access Token: " << accessToken << std::endl;
             return accessToken;
         } else {
             std::cerr << "Unexpected API Response Format" << std::endl;
