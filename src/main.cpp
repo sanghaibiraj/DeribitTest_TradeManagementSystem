@@ -29,7 +29,6 @@ int main() {
     std::cout << "Order Placement Response: " << placeOrderResponse << std::endl;
 
     // Step 4: Extract order_id from the response
-    // You need to parse the response JSON to extract the order_id
     std::string orderId;
     try {
         auto responseJson = json::parse(placeOrderResponse);
@@ -48,6 +47,10 @@ int main() {
     // Step 5: Modify the order
     std::string modifyOrderResponse = orderManager.modifyOrder(orderId, 20, 31000.0);
     std::cout << "Modify Order Response: " << modifyOrderResponse << std::endl;
+
+    // Step 6: Cancel the order
+    std::string cancelOrderResponse = orderManager.cancelOrder(orderId);
+    std::cout << "Cancel Order Response: " << cancelOrderResponse << std::endl;
 
     return 0;
 }

@@ -143,17 +143,23 @@ std::string OrderManager::cancelOrder(const std::string& orderId) {
             // Prepare the URL
             std::string url = "https://test.deribit.com/api/v2/private/cancel";
 
-            // Request body
+            // JSON-RPC style request body
             json requestBody = {
-                {"order_id", orderId}
+                {"jsonrpc", "2.0"},
+                {"method", "private/cancel"},
+                {"id", 1},
+                {"params", {
+                    {"order_id", orderId}
+                }}
             };
 
             std::string data = requestBody.dump();
+            // std::cout << "Cancel Order Request Data: " << data << std::endl;
 
             // Set CURL options
             struct curl_slist* headers = nullptr;
-            headers = curl_slist_append(headers, "Content-Type: application/json");
             headers = curl_slist_append(headers, ("Authorization: Bearer " + accessToken).c_str());
+            headers = curl_slist_append(headers, "Content-Type: application/json");
 
             curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
             curl_easy_setopt(curl, CURLOPT_POST, 1L);
