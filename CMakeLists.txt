@@ -11,6 +11,12 @@ add_executable(GoQuant
     src/order_management/OrderManager.cpp
     src/account_management/AccountManager.cpp
     src/market_data/MarketDataManager.cpp
+    src/WebSocketClient.cpp
+)
+
+# Add include directories
+include_directories(
+    /usr/include/boost
 )
 
 # Find and link libcurl
@@ -20,3 +26,26 @@ target_link_libraries(GoQuant PRIVATE ${CURL_LIBRARIES})
 
 find_package(nlohmann_json 3.2.0 REQUIRED)
 target_link_libraries(GoQuant PRIVATE nlohmann_json::nlohmann_json)
+
+find_package(Boost REQUIRED COMPONENTS system)
+
+include_directories(${Boost_INCLUDE_DIRS})
+
+target_link_libraries(GoQuant PRIVATE
+    Boost::boost
+    Boost::system
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    pthread
+)
+
+find_package(OpenSSL REQUIRED)
+
+# target_link_libraries(GoQuant PRIVATE
+#     Boost::boost
+#     Boost::system
+#     Boost::asio
+#     OpenSSL::SSL
+#     OpenSSL::Crypto
+#     pthread
+# )
