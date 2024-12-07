@@ -59,5 +59,9 @@ int main() {
     std::cout << "Account Summary: " << accountManager.getAccountSummary() << std::endl;
     std::cout << "Positions: " << accountManager.getPositions() << std::endl;
 
+    // Use MarketDataManager
+    MarketDataManager marketDataManager;
+    std::cout << "Order Book: " << marketDataManager.getOrderBook("BTC-PERPETUAL") << std::endl;
+
     return 0;
 }
