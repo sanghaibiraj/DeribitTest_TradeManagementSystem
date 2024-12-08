@@ -3,17 +3,23 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <limits>
 
-#include "auth/AuthManager.h"
-#include "order_management/OrderManager.h"
-#include "account_management/AccountManager.h"
-#include "market_data/MarketDataManager.h"
-#include "WebSocketClient.h"
-#include <nlohmann/json.hpp>
+#include "auth/AuthManager.h"              // Handles authentication
+#include "order_management/OrderManager.h" // Manages orders
+#include "account_management/AccountManager.h" // Retrieves account data
+#include "market_data/MarketDataManager.h"     // Fetches market data
+#include "WebSocketClient.h"                   // Implements WebSocket communication
+#include <nlohmann/json.hpp>                   // JSON parsing and serialization
 
 using json = nlohmann::json;
 
-// Utility Functions
+// --- Utility Functions ---
+
+/**
+ * Clears the console screen for a clean user interface.
+ * This function detects the platform and executes the appropriate system command.
+ */
 void clearConsole()
 {
 #ifdef _WIN32
@@ -23,18 +29,27 @@ void clearConsole()
 #endif
 }
 
+/**
+ * Waits for the user to press Enter, pausing execution.
+ * Ensures the user has time to read the output before proceeding.
+ */
 void waitForKey()
 {
     std::cout << "\nPress Enter to continue...";
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
+/**
+ * Beautifies JSON strings for better readability.
+ * Attempts to parse the JSON string and format it with indentation.
+ * Handles parsing errors gracefully.
+ */
 std::string beautifyJson(const std::string &jsonString)
 {
     try
     {
         json parsedJson = json::parse(jsonString);
-        return parsedJson.dump(4); // Indent with 4 spaces
+        return parsedJson.dump(4); // Indent with 4 spaces for readability
     }
     catch (const std::exception &e)
     {
@@ -43,6 +58,10 @@ std::string beautifyJson(const std::string &jsonString)
     }
 }
 
+/**
+ * Displays the main menu for the Deribit Trading Management System.
+ * Lists all available operations for user interaction.
+ */
 void displayMenu()
 {
     std::cout << "\n=== Deribit Trading System Menu ===\n";
@@ -60,53 +79,75 @@ void displayMenu()
 
 int main()
 {
-    // Take API credentials as input
+    /*
+     * Step 1: Authenticate with Deribit API.
+     * The system begins by requesting `client_id` and `client_secret` from the user.
+     * These credentials are used to authenticate with the Deribit API and retrieve an access token.
+     */
     std::string clientId, clientSecret;
     std::cout << "Enter your Deribit client_id: ";
     std::getline(std::cin, clientId);
     std::cout << "Enter your Deribit client_secret: ";
     std::getline(std::cin, clientSecret);
 
-    // Authenticate
     AuthManager authManager(clientId, clientSecret);
     std::string token = authManager.authenticate();
 
     if (token.empty())
     {
-        std::cerr << "Authentication Failed!" << std::endl;
-        return 1;
+        std::cerr << "Authentication Failed! Please check your credentials.\n";
+        return 1; // Exit if authentication fails
     }
 
-    std::cout << "Authentication Successful! Token: " << token << std::endl;
+    std::cout << "Authentication Successful! Token: " << token << "\n";
 
-    // Initialize managers
+    /*
+     * Step 2: Initialize Managers.
+     * The system initializes several managers to handle specific functionalities:
+     * - OrderManager: Handles order placement, modification, and cancellation.
+     * - AccountManager: Retrieves account summaries and open positions.
+     * - MarketDataManager: Fetches order book and market data.
+     */
     OrderManager orderManager(token);
     AccountManager accountManager(token);
     MarketDataManager marketDataManager;
 
-    // Atomic flag for WebSocket thread control
+    /*
+     * Step 3: Prepare for Real-Time Data Streaming.
+     * An atomic flag (`keepRunning`) is used to control WebSocket threads for real-time market data.
+     */
     std::atomic<bool> keepRunning(true);
 
+    /*
+     * Step 4: Main Menu Loop.
+     * Displays a menu of options for user interaction.
+     * The loop continues until the user selects the exit option.
+     */
     int choice;
     while (true)
     {
         clearConsole();
         displayMenu();
         std::cin >> choice;
-        std::cin.ignore();
+        std::cin.ignore(); // Clear any leftover input
 
         clearConsole();
 
-        if (choice == 9)
+        if (choice == 9) // Exit the program
         {
-            std::cout << "Exiting the system. Goodbye!" << std::endl;
+            std::cout << "Exiting the system. Goodbye!\n";
             break;
         }
 
+        // --- Menu Options ---
         switch (choice)
         {
-        case 1:
-        { // Place Order
+        case 1: // Place Order
+        {
+            /*
+             * Allows the user to place a new limit order.
+             * The user specifies the instrument, side (buy/sell), amount, and price.
+             */
             std::string instrument, side;
             double amount, price;
             std::cout << "Enter instrument name (e.g., BTC-PERPETUAL): ";
@@ -121,12 +162,16 @@ int main()
 
             std::string response = orderManager.placeOrder(instrument, side, amount, price);
             std::cout << "Order Placement Response:\n"
-                      << beautifyJson(response) << std::endl;
+                      << beautifyJson(response) << "\n";
             break;
         }
 
-        case 2:
-        { // Modify Order
+        case 2: // Modify Order
+        {
+            /*
+             * Allows the user to modify an existing order.
+             * The user specifies the order ID, new amount, and new price.
+             */
             std::string orderId;
             double newAmount, newPrice;
             std::cout << "Enter order ID to modify: ";
@@ -139,48 +184,47 @@ int main()
 
             std::string response = orderManager.modifyOrder(orderId, newAmount, newPrice);
             std::cout << "Modify Order Response:\n"
-                      << beautifyJson(response) << std::endl;
+                      << beautifyJson(response) << "\n";
             break;
         }
 
-        case 3:
-        { // Cancel Order
+        case 3: // Cancel Order
+        {
+            /*
+             * Allows the user to cancel an active order.
+             * The user provides the order ID of the order they wish to cancel.
+             */
             std::string orderId;
             std::cout << "Enter order ID to cancel: ";
             std::getline(std::cin, orderId);
 
             std::string response = orderManager.cancelOrder(orderId);
             std::cout << "Cancel Order Response:\n"
-                      << beautifyJson(response) << std::endl;
+                      << beautifyJson(response) << "\n";
             break;
         }
 
-        case 4:
-        { // Get All Orders
+        case 4: // Get All Orders
+        {
+            /*
+             * Fetches all open orders for a specific instrument.
+             * The user provides the instrument name (e.g., BTC-PERPETUAL).
+             */
             std::string instrument;
             std::cout << "Enter instrument name (e.g., BTC-PERPETUAL): ";
             std::getline(std::cin, instrument);
 
-            // Fetch open orders
             std::string response = orderManager.getAllOrders(instrument);
-
             if (response.empty())
             {
-                std::cerr << "Failed to fetch orders. No response received." << std::endl;
+                std::cerr << "Failed to fetch orders. No response received.\n";
                 break;
             }
 
-            // Parse and process the response
             try
             {
                 auto responseJson = json::parse(response);
-
-                // Check for API error
-                if (responseJson.contains("error"))
-                {
-                    std::cerr << "API Error: " << responseJson["error"]["message"] << std::endl;
-                }
-                else if (responseJson.contains("result") && !responseJson["result"].empty())
+                if (responseJson.contains("result") && !responseJson["result"].empty())
                 {
                     std::cout << "\n--- Open Orders ---\n";
                     for (const auto &order : responseJson["result"])
@@ -205,101 +249,84 @@ int main()
             break;
         }
 
-        case 5:
-        { // Get Account Summary
+        case 5: // Get Account Summary
+        {
+            /*
+             * Fetches the account summary, including balance and equity details.
+             */
             std::string response = accountManager.getAccountSummary();
             std::cout << "Account Summary:\n"
-                      << beautifyJson(response) << std::endl;
+                      << beautifyJson(response) << "\n";
             break;
         }
 
-        case 6:
-        { // Get Current Positions
+        case 6: // Get Current Positions
+        {
+            /*
+             * Fetches all current open positions for the user.
+             */
             std::string response = accountManager.getPositions();
             std::cout << "Current Positions:\n"
-                      << beautifyJson(response) << std::endl;
+                      << beautifyJson(response) << "\n";
             break;
         }
 
-        case 7:
-        { // Get Order Book
+        case 7: // Get Order Book
+        {
+            /*
+             * Retrieves the top levels of the order book for a specific instrument.
+             * The user provides the instrument name (e.g., BTC-PERPETUAL).
+             */
             std::string instrument;
             std::cout << "Enter instrument name for order book (e.g., BTC-PERPETUAL): ";
             std::getline(std::cin, instrument);
 
             std::string response = marketDataManager.getOrderBook(instrument);
             std::cout << "Order Book:\n"
-                      << beautifyJson(response) << std::endl;
+                      << beautifyJson(response) << "\n";
             break;
         }
 
-        case 8:
-        { // Start WebSocket for Real-Time Data
+        case 8: // Start WebSocket for Real-Time Data
+        {
+            /*
+             * Starts a WebSocket client to stream real-time market data.
+             * The user provides the symbol to subscribe to (e.g., BTC-PERPETUAL).
+             */
             std::string symbol;
             std::cout << "Enter symbol to subscribe for real-time updates (e.g., BTC-PERPETUAL): ";
             std::getline(std::cin, symbol);
 
-            // Configure WebSocket client
-            WebSocketClient::Config wsConfig;
-            wsConfig.host = "test.deribit.com";
-            wsConfig.port = "443";
-            wsConfig.path = "/ws/api/v2";
-            wsConfig.connect_timeout = std::chrono::seconds(10);
-            wsConfig.read_timeout = std::chrono::seconds(30);
+            WebSocketClient::Config wsConfig{"test.deribit.com", "443", "/ws/api/v2"};
+            WebSocketClient wsClient(wsConfig);
+            wsClient.connect();
 
-            try
+            json subscribeMessage = {
+                {"jsonrpc", "2.0"},
+                {"method", "public/subscribe"},
+                {"params", {{"channels", {"book." + symbol + ".100ms"}}}}};
+
+            wsClient.send(subscribeMessage.dump());
+
+            std::thread receiveThread([&wsClient, &keepRunning]()
             {
-                WebSocketClient wsClient(wsConfig);
-                wsClient.connect();
+                while (keepRunning)
+                {
+                    wsClient.receive([](const std::string &message)
+                                    { std::cout << "Real-time Data: " << beautifyJson(message) << "\n"; });
+                }
+            });
 
-                // Prepare subscription message
-                json subscribeMessage = {
-                    {"jsonrpc", "2.0"},
-                    {"method", "public/subscribe"},
-                    {"id", 42},
-                    {"params", {{"channels", {"book." + symbol + ".100ms"}}}}};
-
-                // Send subscription message
-                wsClient.send(subscribeMessage.dump());
-
-                // Start a thread for receiving messages
-                std::thread receiveThread([&wsClient, &keepRunning]()
-                                          {
-                        try {
-                            while (keepRunning) {
-                                wsClient.receive([](const std::string& message) {
-                                    std::cout << "Real-time Data: " 
-                                              << beautifyJson(message) 
-                                              << std::endl;
-                                });
-                            }
-                        }
-                        catch (const std::exception& e) {
-                            std::cerr << "WebSocket receive error: " 
-                                      << e.what() << std::endl;
-                            keepRunning = false;
-                        } });
-
-                // Wait for user to stop
-                std::cout << "Press Enter to stop WebSocket stream..." << std::endl;
-                std::cin.get();
-
-                // Stop the thread
-                keepRunning = false;
-                receiveThread.join();
-
-                // Disconnect WebSocket
-                wsClient.disconnect();
-            }
-            catch (const std::exception &e)
-            {
-                std::cerr << "WebSocket error: " << e.what() << std::endl;
-            }
+            std::cout << "Press Enter to stop WebSocket stream...\n";
+            std::cin.get();
+            keepRunning = false;
+            receiveThread.join();
+            wsClient.disconnect();
             break;
         }
 
         default:
-            std::cerr << "Invalid choice. Please try again." << std::endl;
+            std::cerr << "Invalid choice. Please try again.\n";
         }
 
         waitForKey();

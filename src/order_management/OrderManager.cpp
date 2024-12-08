@@ -6,15 +6,55 @@
 
 using json = nlohmann::json;
 
+/**
+ * @file OrderManager.cpp
+ * 
+ * This file implements the `OrderManager` class, which provides functionalities 
+ * to manage trading orders on the Deribit platform. The class supports placing 
+ * new orders, modifying existing ones, canceling orders, and fetching open orders 
+ * for a specific instrument. Each method communicates with Deribit's API endpoints 
+ * using HTTP POST requests via the `libcurl` library.
+ */
+
+/**
+ * @brief Constructor for the `OrderManager` class.
+ * 
+ * @param token Access token for authenticating API requests.
+ * 
+ * The constructor initializes the `OrderManager` instance with a valid access token.
+ * This token is used in the `Authorization` header of all API requests.
+ */
 OrderManager::OrderManager(const std::string& token) : accessToken(token) {}
 
-// Helper function for CURL response handling
+/**
+ * @brief Helper function for handling CURL responses.
+ * 
+ * @param contents Pointer to the data received in the response.
+ * @param size Size of each data chunk.
+ * @param nmemb Number of data chunks.
+ * @param userdata Pointer to the string buffer where the response will be stored.
+ * @return The total size of data processed.
+ * 
+ * This function appends the received response data to a string buffer for further processing.
+ */
 static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userdata) {
     ((std::string*)userdata)->append((char*)contents, size * nmemb);
     return size * nmemb;
 }
 
-// Place Order
+/**
+ * @brief Places a new limit order.
+ * 
+ * @param instrument The trading instrument name (e.g., "BTC-PERPETUAL").
+ * @param side The side of the order ("buy" or "sell").
+ * @param quantity The quantity to trade.
+ * @param price The limit price of the order.
+ * @return A JSON string containing the API response.
+ * 
+ * This method sends a POST request to the appropriate endpoint (`buy` or `sell`) based 
+ * on the `side` parameter. It constructs a JSON-RPC request body and sends it via CURL. 
+ * The API response contains details of the placed order or an error message if the request fails.
+ */
 std::string OrderManager::placeOrder(const std::string& instrument, const std::string& side, double quantity, double price) {
     CURL* curl = curl_easy_init();
     std::string response;
@@ -27,7 +67,7 @@ std::string OrderManager::placeOrder(const std::string& instrument, const std::s
                 url = "https://test.deribit.com/api/v2/private/sell";
             }
 
-            // JSON-RPC style request body
+            // JSON-RPC request body
             json requestBody = {
                 {"jsonrpc", "2.0"},
                 {"method", side == "buy" ? "private/buy" : "private/sell"},
@@ -41,7 +81,6 @@ std::string OrderManager::placeOrder(const std::string& instrument, const std::s
             };
 
             std::string data = requestBody.dump();
-            // std::cout << "Place Order Request Data: " << data << std::endl;
 
             // Set CURL options
             struct curl_slist* headers = nullptr;
@@ -60,10 +99,7 @@ std::string OrderManager::placeOrder(const std::string& instrument, const std::s
 
             if (res != CURLE_OK) {
                 std::cerr << "CURL Error: " << curl_easy_strerror(res) << std::endl;
-            } 
-            // else {
-                // std::cout << "Place Order Response: " << response << std::endl;
-            // }
+            }
 
             // Cleanup
             curl_slist_free_all(headers);
@@ -76,7 +112,18 @@ std::string OrderManager::placeOrder(const std::string& instrument, const std::s
     return response;
 }
 
-// modify order
+/**
+ * @brief Modifies an existing order.
+ * 
+ * @param orderId The unique identifier of the order to modify.
+ * @param newQuantity The new quantity for the order.
+ * @param newPrice The new price for the order.
+ * @return A JSON string containing the API response.
+ * 
+ * This method sends a POST request to the `edit` endpoint to update the details 
+ * of an existing limit order. The API response confirms the modification or 
+ * returns an error message.
+ */
 std::string OrderManager::modifyOrder(const std::string& orderId, double newQuantity, double newPrice) {
     CURL* curl = curl_easy_init();
     std::string response;
@@ -86,7 +133,7 @@ std::string OrderManager::modifyOrder(const std::string& orderId, double newQuan
             // Prepare the URL
             std::string url = "https://test.deribit.com/api/v2/private/edit";
 
-            // JSON-RPC style request body
+            // JSON-RPC request body
             json requestBody = {
                 {"jsonrpc", "2.0"},
                 {"method", "private/edit"},
@@ -99,7 +146,6 @@ std::string OrderManager::modifyOrder(const std::string& orderId, double newQuan
             };
 
             std::string data = requestBody.dump();
-            // std::cout << "Modify Order Request Data: " << data << std::endl;
 
             // Set CURL options
             struct curl_slist* headers = nullptr;
@@ -118,10 +164,7 @@ std::string OrderManager::modifyOrder(const std::string& orderId, double newQuan
 
             if (res != CURLE_OK) {
                 std::cerr << "CURL Error: " << curl_easy_strerror(res) << std::endl;
-            } 
-            // else {
-            //     std::cout << "Modify Order Response: " << response << std::endl;
-            // }
+            }
 
             // Cleanup
             curl_slist_free_all(headers);
@@ -134,18 +177,22 @@ std::string OrderManager::modifyOrder(const std::string& orderId, double newQuan
     return response;
 }
 
-
-// Cancel Order
+/**
+ * @brief Cancels an active order.
+ * 
+ * @param orderId The unique identifier of the order to cancel.
+ * @return A JSON string containing the API response.
+ * 
+ * Sends a POST request to the `cancel` endpoint to remove an active order from the order book.
+ */
 std::string OrderManager::cancelOrder(const std::string& orderId) {
     CURL* curl = curl_easy_init();
     std::string response;
 
     if (curl) {
         try {
-            // Prepare the URL
             std::string url = "https://test.deribit.com/api/v2/private/cancel";
 
-            // JSON-RPC style request body
             json requestBody = {
                 {"jsonrpc", "2.0"},
                 {"method", "private/cancel"},
@@ -156,9 +203,7 @@ std::string OrderManager::cancelOrder(const std::string& orderId) {
             };
 
             std::string data = requestBody.dump();
-            // std::cout << "Cancel Order Request Data: " << data << std::endl;
 
-            // Set CURL options
             struct curl_slist* headers = nullptr;
             headers = curl_slist_append(headers, ("Authorization: Bearer " + accessToken).c_str());
             headers = curl_slist_append(headers, "Content-Type: application/json");
@@ -170,17 +215,12 @@ std::string OrderManager::cancelOrder(const std::string& orderId) {
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
             curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
-            // Perform the request
             CURLcode res = curl_easy_perform(curl);
 
             if (res != CURLE_OK) {
                 std::cerr << "CURL Error: " << curl_easy_strerror(res) << std::endl;
-            } 
-            // else {
-            //     std::cout << "Cancel Order Response: " << response << std::endl;
-            // }
+            }
 
-            // Cleanup
             curl_slist_free_all(headers);
             curl_easy_cleanup(curl);
         } catch (const std::exception& e) {
@@ -191,6 +231,14 @@ std::string OrderManager::cancelOrder(const std::string& orderId) {
     return response;
 }
 
+/**
+ * @brief Fetches all open orders for a specific instrument.
+ * 
+ * @param instrument The trading instrument name (e.g., "BTC-PERPETUAL").
+ * @return A JSON string containing the API response.
+ * 
+ * This method retrieves a list of all open orders for the specified instrument.
+ */
 std::string OrderManager::getAllOrders(const std::string& instrument) {
     CURL* curl = curl_easy_init();
     std::string response;
@@ -201,21 +249,11 @@ std::string OrderManager::getAllOrders(const std::string& instrument) {
     }
 
     try {
-        // Deribit API endpoint
         std::string url = "https://test.deribit.com/api/v2/private/get_open_orders_by_instrument";
 
-        // Validate access token
-        if (accessToken.empty()) {
-            std::cerr << "Access token is empty! Please authenticate first." << std::endl;
-            curl_easy_cleanup(curl);
-            return "";
-        }
-
-        // JSON-RPC request body
         json requestBody = {
             {"jsonrpc", "2.0"},
             {"method", "private/get_open_orders_by_instrument"},
-            // {"id", 1},
             {"params", {
                 {"instrument_name", instrument}
             }}
@@ -223,10 +261,6 @@ std::string OrderManager::getAllOrders(const std::string& instrument) {
 
         std::string data = requestBody.dump();
 
-        // Print the request for debugging
-        // std::cout << "Request Sent: " << data << std::endl;
-
-        // Set CURL options
         struct curl_slist* headers = nullptr;
         headers = curl_slist_append(headers, ("Authorization: Bearer " + accessToken).c_str());
         headers = curl_slist_append(headers, "Content-Type: application/json");
@@ -238,23 +272,14 @@ std::string OrderManager::getAllOrders(const std::string& instrument) {
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
-        // Perform the request
         CURLcode res = curl_easy_perform(curl);
 
         if (res != CURLE_OK) {
             std::cerr << "CURL Error: " << curl_easy_strerror(res) << std::endl;
-            curl_slist_free_all(headers);
-            curl_easy_cleanup(curl);
-            return "";
         }
 
-        // Print the raw API response
-        // std::cout << "Raw API Response: " << response << std::endl;
-
-        // Cleanup
         curl_slist_free_all(headers);
         curl_easy_cleanup(curl);
-
     } catch (const std::exception& e) {
         std::cerr << "Error during fetching orders: " << e.what() << std::endl;
     }
