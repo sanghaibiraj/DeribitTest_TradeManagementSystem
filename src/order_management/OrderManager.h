@@ -9,6 +9,7 @@ public:
     std::string placeOrder(const std::string& instrument, const std::string& side, double quantity, double price);
     std::string modifyOrder(const std::string& orderId, double newQuantity, double newPrice);
     std::string cancelOrder(const std::string& orderId);
+    std::string getAllOrders(const std::string& instrument);
 
 private:
     std::string accessToken;

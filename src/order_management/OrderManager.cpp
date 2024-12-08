@@ -190,3 +190,74 @@ std::string OrderManager::cancelOrder(const std::string& orderId) {
 
     return response;
 }
+
+std::string OrderManager::getAllOrders(const std::string& instrument) {
+    CURL* curl = curl_easy_init();
+    std::string response;
+
+    if (!curl) {
+        std::cerr << "Failed to initialize CURL!" << std::endl;
+        return "";
+    }
+
+    try {
+        // Deribit API endpoint
+        std::string url = "https://test.deribit.com/api/v2/private/get_open_orders_by_instrument";
+
+        // Validate access token
+        if (accessToken.empty()) {
+            std::cerr << "Access token is empty! Please authenticate first." << std::endl;
+            curl_easy_cleanup(curl);
+            return "";
+        }
+
+        // JSON-RPC request body
+        json requestBody = {
+            {"jsonrpc", "2.0"},
+            {"method", "private/get_open_orders_by_instrument"},
+            // {"id", 1},
+            {"params", {
+                {"instrument_name", instrument}
+            }}
+        };
+
+        std::string data = requestBody.dump();
+
+        // Print the request for debugging
+        // std::cout << "Request Sent: " << data << std::endl;
+
+        // Set CURL options
+        struct curl_slist* headers = nullptr;
+        headers = curl_slist_append(headers, ("Authorization: Bearer " + accessToken).c_str());
+        headers = curl_slist_append(headers, "Content-Type: application/json");
+
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_POST, 1L);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+
+        // Perform the request
+        CURLcode res = curl_easy_perform(curl);
+
+        if (res != CURLE_OK) {
+            std::cerr << "CURL Error: " << curl_easy_strerror(res) << std::endl;
+            curl_slist_free_all(headers);
+            curl_easy_cleanup(curl);
+            return "";
+        }
+
+        // Print the raw API response
+        // std::cout << "Raw API Response: " << response << std::endl;
+
+        // Cleanup
+        curl_slist_free_all(headers);
+        curl_easy_cleanup(curl);
+
+    } catch (const std::exception& e) {
+        std::cerr << "Error during fetching orders: " << e.what() << std::endl;
+    }
+
+    return response;
+}
