@@ -3,8 +3,25 @@
 #include <mutex>
 #include <thread>
 
+/**
+ * @brief Implements a thread-safe, SSL-enabled WebSocket client using Boost.Beast and Boost.Asio
+ * 
+ * This implementation follows the Pimpl (Pointer to Implementation) idiom to:
+ * - Provide clean separation of interface and implementation
+ * - Hide complex Boost library details from the header
+ * - Enable easier future modifications without breaking ABI compatibility
+ */
 class WebSocketClient::Impl {
 public:
+    /**
+     * @brief Constructor initializes WebSocket client configuration
+     * 
+     * Sets up SSL context with configurable verification:
+     * - If verify_ssl is true, uses system's default certificate verification
+     * - If verify_ssl is false, disables SSL certificate verification
+     * 
+     * @param config Configuration settings for WebSocket connection
+     */
     Impl(const Config& config) 
         : config_(config), 
           ioc_(std::make_shared<asio::io_context>()),
@@ -21,52 +38,70 @@ public:
         }
     }
 
+    /**
+     * @brief Establishes a secure WebSocket connection
+     * 
+     * Connection process:
+     * 1. Resolve host and port
+     * 2. Set up a connection timeout mechanism
+     * 3. Perform SSL handshake
+     * 4. Complete WebSocket handshake
+     * 
+     * Thread-safety is ensured via mutex locking
+     * Throws exceptions on connection failures
+     */
     void connect() {
-    std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
     
-    if (state_ == State::Connected) {
-        return;
+        if (state_ == State::Connected) {
+            return;
+        }
+
+        state_ = State::Connecting;
+        last_error_.reset();
+
+        try {
+            // Resolve host
+            asio::ip::tcp::resolver resolver(*ioc_);
+            auto const results = resolver.resolve(config_.host, config_.port);
+
+            // Connect with timeout
+            asio::steady_timer timeout_timer(*ioc_, 
+                std::chrono::steady_clock::now() + config_.connect_timeout);
+            
+            timeout_timer.async_wait([this](const boost::system::error_code& ec) {
+                if (ec != asio::error::operation_aborted) {
+                    // Use next_layer().lowest_layer() instead of lowest_layer()
+                    ws_stream_.next_layer().lowest_layer().cancel();
+                }
+            });
+
+            // Connect to server
+            asio::connect(ws_stream_.next_layer().lowest_layer(), results);
+
+            // Perform SSL handshake
+            ws_stream_.next_layer().handshake(asio::ssl::stream_base::client);
+
+            // WebSocket handshake
+            ws_stream_.handshake(config_.host, config_.path);
+
+            state_ = State::Connected;
+            std::cout << "WebSocket connected to " << config_.host << std::endl;
+        }
+        catch (const std::exception& e) {
+            state_ = State::Disconnected;
+            last_error_ = e.what();
+            std::cerr << "Connection error: " << e.what() << std::endl;
+            throw;
+        }
     }
 
-    state_ = State::Connecting;
-    last_error_.reset();
-
-    try {
-        // Resolve host
-        asio::ip::tcp::resolver resolver(*ioc_);
-        auto const results = resolver.resolve(config_.host, config_.port);
-
-        // Connect with timeout
-        asio::steady_timer timeout_timer(*ioc_, 
-            std::chrono::steady_clock::now() + config_.connect_timeout);
-        
-        timeout_timer.async_wait([this](const boost::system::error_code& ec) {
-            if (ec != asio::error::operation_aborted) {
-                // Use next_layer().lowest_layer() instead of lowest_layer()
-                ws_stream_.next_layer().lowest_layer().cancel();
-            }
-        });
-
-        // Connect to server
-        asio::connect(ws_stream_.next_layer().lowest_layer(), results);
-
-        // Perform SSL handshake
-        ws_stream_.next_layer().handshake(asio::ssl::stream_base::client);
-
-        // WebSocket handshake
-        ws_stream_.handshake(config_.host, config_.path);
-
-        state_ = State::Connected;
-        std::cout << "WebSocket connected to " << config_.host << std::endl;
-    }
-    catch (const std::exception& e) {
-        state_ = State::Disconnected;
-        last_error_ = e.what();
-        std::cerr << "Connection error: " << e.what() << std::endl;
-        throw;
-    }
-}
-
+    /**
+     * @brief Gracefully closes the WebSocket connection
+     * 
+     * Ensures thread-safe disconnection with proper error handling
+     * Logs any errors encountered during disconnection
+     */
     void disconnect() {
         std::lock_guard<std::mutex> lock(mutex_);
         
@@ -83,6 +118,14 @@ public:
         state_ = State::Disconnected;
     }
 
+    /**
+     * @brief Sends a message over the WebSocket connection
+     * 
+     * Ensures thread-safety and connection state validation
+     * Throws an exception if not connected or send fails
+     * 
+     * @param message String message to be sent
+     */
     void send(const std::string& message) {
         std::lock_guard<std::mutex> lock(mutex_);
         
@@ -100,6 +143,14 @@ public:
         }
     }
 
+    /**
+     * @brief Receives a message from the WebSocket connection
+     * 
+     * Provides a synchronous message reception mechanism
+     * Invokes a callback function with the received message
+     * 
+     * @param callback Function to be called with the received message
+     */
     void receive(std::function<void(const std::string&)> callback) {
         std::lock_guard<std::mutex> lock(mutex_);
         
@@ -121,10 +172,18 @@ public:
         }
     }
 
+    /**
+     * @brief Retrieves the current connection state
+     * @return Current connection state
+     */
     State get_state() const {
         return state_;
     }
 
+    /**
+     * @brief Retrieves the last error that occurred
+     * @return Optional string containing the last error message
+     */
     std::optional<std::string> get_last_error() const {
         return last_error_;
     }
@@ -139,6 +198,9 @@ private:
     State state_;
     std::optional<std::string> last_error_;
 };
+
+// Remaining wrapper methods remain the same as in the original implementation
+// (WebSocketClient constructor, destructor, and forwarding methods)
 
 // Implement the WebSocketClient wrapper methods
 WebSocketClient::WebSocketClient(Config config) 
