@@ -41,11 +41,6 @@ target_link_libraries(GoQuant PRIVATE
 
 find_package(OpenSSL REQUIRED)
 
-# target_link_libraries(GoQuant PRIVATE
-#     Boost::boost
-#     Boost::system
-#     Boost::asio
-#     OpenSSL::SSL
-#     OpenSSL::Crypto
-#     pthread
-# )
+find_package(fmt REQUIRED)
+target_link_libraries(GoQuant PRIVATE fmt::fmt)
+

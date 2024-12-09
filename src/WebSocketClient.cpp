@@ -3,6 +3,14 @@
 #include <mutex>
 #include <thread>
 
+#include <fmt/color.h>
+
+// Define color constants for clarity
+const auto ERROR_COLOR = fmt::fg(fmt::color::red);
+const auto SUCCESS_COLOR = fmt::fg(fmt::color::cyan);
+const auto INFO_COLOR = fmt::fg(fmt::color::blue);
+const auto HIGHLIGHT_COLOR = fmt::fg(fmt::color::yellow);
+
 /**
  * @brief Implements a thread-safe, SSL-enabled WebSocket client using Boost.Beast and Boost.Asio
  * 
@@ -86,12 +94,12 @@ public:
             ws_stream_.handshake(config_.host, config_.path);
 
             state_ = State::Connected;
-            std::cout << "WebSocket connected to " << config_.host << std::endl;
+            std::cout << fmt::format(SUCCESS_COLOR, "WebSocket connected to: {}\n", config_.host);
         }
         catch (const std::exception& e) {
             state_ = State::Disconnected;
             last_error_ = e.what();
-            std::cerr << "Connection error: " << e.what() << std::endl;
+            std::cerr << fmt::format(ERROR_COLOR, "Connection error: {}\n", e.what());
             throw;
         }
     }
@@ -111,7 +119,7 @@ public:
                 ws_stream_.close(websocket::close_code::normal);
             }
             catch (const std::exception& e) {
-                std::cerr << "Disconnection error: " << e.what() << std::endl;
+                std::cerr << fmt::format(ERROR_COLOR, "Disconnection error: {}\n", e.what());
             }
         }
         
@@ -138,7 +146,7 @@ public:
         }
         catch (const std::exception& e) {
             last_error_ = e.what();
-            std::cerr << "Send error: " << e.what() << std::endl;
+            std::cerr << fmt::format(ERROR_COLOR, "Send error: {}\n", e.what());
             throw;
         }
     }
@@ -167,7 +175,7 @@ public:
         }
         catch (const std::exception& e) {
             last_error_ = e.what();
-            std::cerr << "Receive error: " << e.what() << std::endl;
+            std::cerr << fmt::format(ERROR_COLOR, "Receive error: {}\n", e.what());
             throw;
         }
     }

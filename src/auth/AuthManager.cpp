@@ -3,6 +3,13 @@
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 #include <sstream>
+#include <fmt/color.h>
+
+// Define color constants for clarity
+const auto ERROR_COLOR = fmt::fg(fmt::color::red);
+const auto SUCCESS_COLOR = fmt::fg(fmt::color::cyan);
+const auto INFO_COLOR = fmt::fg(fmt::color::blue);
+const auto HIGHLIGHT_COLOR = fmt::fg(fmt::color::yellow);
 
 using json = nlohmann::json;
 
@@ -81,7 +88,7 @@ std::string AuthManager::authenticate() {
     // Initialize CURL
     curl = curl_easy_init();
     if (!curl) {
-        std::cerr << "Failed to initialize CURL" << std::endl;
+        std::cerr << fmt::format(ERROR_COLOR, "Failed to initialize CURL\n");
         return "";
     }
 
@@ -124,7 +131,7 @@ std::string AuthManager::authenticate() {
 
         // Handle CURL errors
         if (res != CURLE_OK) {
-            std::cerr << "CURL Error: " << curl_easy_strerror(res) << std::endl;
+            std::cerr << fmt::format(ERROR_COLOR, "CURL Error: {}\n", curl_easy_strerror(res));
             curl_easy_cleanup(curl);
             return "";
         }
@@ -137,7 +144,7 @@ std::string AuthManager::authenticate() {
 
         // Check for errors in the API response
         if (jsonResponse.contains("error")) {
-            std::cerr << "API Error: " << jsonResponse["error"]["message"] << std::endl;
+            std::cerr << fmt::format(ERROR_COLOR, "API Error: {}\n", jsonResponse["error"]["message"]);
             return "";
         }
 
@@ -146,7 +153,7 @@ std::string AuthManager::authenticate() {
             accessToken = jsonResponse["result"]["access_token"];
             return accessToken;
         } else {
-            std::cerr << "Unexpected API Response Format" << std::endl;
+            std::cerr << fmt::format(ERROR_COLOR, "Unexpected API Response Format\n");
             return "";
         }
     } catch (const std::exception& e) {
@@ -154,7 +161,7 @@ std::string AuthManager::authenticate() {
         if (curl) {
             curl_easy_cleanup(curl);
         }
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << fmt::format(ERROR_COLOR, "Error: {}\n", e.what());
         return "";
     }
 }

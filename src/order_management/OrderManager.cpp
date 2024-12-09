@@ -3,6 +3,13 @@
 #include <nlohmann/json.hpp>
 #include <iostream>
 #include <sstream>
+#include <fmt/color.h>
+
+// Define color constants for clarity
+const auto ERROR_COLOR = fmt::fg(fmt::color::red);
+const auto SUCCESS_COLOR = fmt::fg(fmt::color::cyan);
+const auto INFO_COLOR = fmt::fg(fmt::color::blue);
+const auto HIGHLIGHT_COLOR = fmt::fg(fmt::color::yellow);
 
 using json = nlohmann::json;
 
@@ -98,14 +105,14 @@ std::string OrderManager::placeOrder(const std::string& instrument, const std::s
             CURLcode res = curl_easy_perform(curl);
 
             if (res != CURLE_OK) {
-                std::cerr << "CURL Error: " << curl_easy_strerror(res) << std::endl;
+                std::cerr << fmt::format(ERROR_COLOR, "CURL error: {}\n", curl_easy_strerror(res));
             }
 
             // Cleanup
             curl_slist_free_all(headers);
             curl_easy_cleanup(curl);
         } catch (const std::exception& e) {
-            std::cerr << "Error while placing order: " << e.what() << std::endl;
+            std::cerr << fmt::format(ERROR_COLOR, "Error while placing order: {}\n", e.what());
         }
     }
 
@@ -163,14 +170,14 @@ std::string OrderManager::modifyOrder(const std::string& orderId, double newQuan
             CURLcode res = curl_easy_perform(curl);
 
             if (res != CURLE_OK) {
-                std::cerr << "CURL Error: " << curl_easy_strerror(res) << std::endl;
+                std::cerr << fmt::format(ERROR_COLOR, "CURL Error: {}\n", curl_easy_strerror(res));
             }
 
             // Cleanup
             curl_slist_free_all(headers);
             curl_easy_cleanup(curl);
         } catch (const std::exception& e) {
-            std::cerr << "Error while modifying order: " << e.what() << std::endl;
+            std::cerr << fmt::format(ERROR_COLOR, "Error while modifying order: {}\n", e.what());
         }
     }
 
@@ -218,13 +225,13 @@ std::string OrderManager::cancelOrder(const std::string& orderId) {
             CURLcode res = curl_easy_perform(curl);
 
             if (res != CURLE_OK) {
-                std::cerr << "CURL Error: " << curl_easy_strerror(res) << std::endl;
+                std::cerr << fmt::format(ERROR_COLOR, "CURL Error: {}\n", curl_easy_strerror(res));
             }
 
             curl_slist_free_all(headers);
             curl_easy_cleanup(curl);
         } catch (const std::exception& e) {
-            std::cerr << "Error while canceling order: " << e.what() << std::endl;
+            std::cerr << fmt::format(ERROR_COLOR, "Error while canceling order: {}\n", e.what());
         }
     }
 
@@ -244,7 +251,7 @@ std::string OrderManager::getAllOrders(const std::string& instrument) {
     std::string response;
 
     if (!curl) {
-        std::cerr << "Failed to initialize CURL!" << std::endl;
+        std::cerr << fmt::format(ERROR_COLOR, "Failed to initialize CURL!\n");
         return "";
     }
 
@@ -275,13 +282,13 @@ std::string OrderManager::getAllOrders(const std::string& instrument) {
         CURLcode res = curl_easy_perform(curl);
 
         if (res != CURLE_OK) {
-            std::cerr << "CURL Error: " << curl_easy_strerror(res) << std::endl;
+            std::cerr << fmt::format(ERROR_COLOR, "CURL Error: {}\n", curl_easy_strerror(res));
         }
 
         curl_slist_free_all(headers);
         curl_easy_cleanup(curl);
     } catch (const std::exception& e) {
-        std::cerr << "Error during fetching orders: " << e.what() << std::endl;
+        std::cerr << fmt::format(ERROR_COLOR, "Error while fetching order: {}\n", e.what());
     }
 
     return response;
