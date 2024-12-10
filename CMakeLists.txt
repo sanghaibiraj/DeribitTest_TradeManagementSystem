@@ -19,6 +19,19 @@ include_directories(
     /usr/include/boost
 )
 
+include(FetchContent)
+
+FetchContent_Declare(
+  nlohmann_json
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG v3.11.2 # Replace with the desired version
+)
+
+FetchContent_MakeAvailable(nlohmann_json)
+
+target_link_libraries(your_target PRIVATE nlohmann_json::nlohmann_json)
+
+
 # Find and link libcurl
 find_package(CURL REQUIRED)
 target_include_directories(GoQuant PRIVATE ${CURL_INCLUDE_DIR})
