@@ -4,6 +4,7 @@
 #include <nlohmann/json.hpp>
 #include <sstream>
 #include <fmt/color.h>
+#include <fmt/format.h>
 
 // Define color constants for clarity
 const auto ERROR_COLOR = fmt::fg(fmt::color::red);
@@ -13,6 +14,18 @@ const auto HIGHLIGHT_COLOR = fmt::fg(fmt::color::yellow);
 
 using json = nlohmann::json;
 
+// Specialize the fmt::formatter for nlohmann::json
+template <>
+struct fmt::formatter<nlohmann::json> {
+    constexpr auto parse(format_parse_context& ctx) { 
+        return ctx.begin(); 
+    }
+
+    template <typename FormatContext>
+    auto format(const nlohmann::json& j, FormatContext& ctx) {
+        return fmt::format_to(ctx.out(), "{}", j.dump());
+    }
+};
 /**
  * @file AuthManager.cpp
  *

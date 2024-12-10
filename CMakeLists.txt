@@ -19,25 +19,19 @@ include_directories(
     /usr/include/boost
 )
 
-include(FetchContent)
-
-FetchContent_Declare(
-  nlohmann_json
-  GIT_REPOSITORY https://github.com/nlohmann/json.git
-  GIT_TAG v3.11.2 # Replace with the desired version
-)
-
-FetchContent_MakeAvailable(nlohmann_json)
-
-target_link_libraries(your_target PRIVATE nlohmann_json::nlohmann_json)
-
-
 # Find and link libcurl
 find_package(CURL REQUIRED)
 target_include_directories(GoQuant PRIVATE ${CURL_INCLUDE_DIR})
 target_link_libraries(GoQuant PRIVATE ${CURL_LIBRARIES})
 
-find_package(nlohmann_json 3.2.0 REQUIRED)
+include(FetchContent)
+FetchContent_Declare(json
+    GIT_REPOSITORY https://github.com/nlohmann/json
+    GIT_TAG v3.11.2
+    CMAKE_ARGS -DJSON_BuildTests=OFF
+)
+FetchContent_MakeAvailable(json)
+# find_package(nlohmann_json 3.2.0 REQUIRED)
 target_link_libraries(GoQuant PRIVATE nlohmann_json::nlohmann_json)
 
 find_package(Boost REQUIRED COMPONENTS system)
@@ -53,7 +47,11 @@ target_link_libraries(GoQuant PRIVATE
 )
 
 find_package(OpenSSL REQUIRED)
-
-find_package(fmt REQUIRED)
+FetchContent_Declare(
+  fmt
+  GIT_REPOSITORY https://github.com/fmtlib/fmt
+  GIT_TAG        e69e5f977d458f2650bb346dadf2ad30c5320281) # 10.2.1
+FetchContent_MakeAvailable(fmt)
 target_link_libraries(GoQuant PRIVATE fmt::fmt)
+
 
