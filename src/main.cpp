@@ -5,8 +5,8 @@
 #include <chrono>
 #include <limits>
 
-#include "auth/AuthManager.h"              // Handles authentication
-#include "order_management/OrderManager.h" // Manages orders
+#include "auth/AuthManager.h"                  // Handles authentication
+#include "order_management/OrderManager.h"     // Manages orders
 #include "account_management/AccountManager.h" // Retrieves account data
 #include "market_data/MarketDataManager.h"     // Fetches market data
 #include "WebSocketClient.h"                   // Implements WebSocket communication
@@ -19,7 +19,6 @@ const auto ERROR_COLOR = fmt::fg(fmt::color::red);
 const auto SUCCESS_COLOR = fmt::fg(fmt::color::cyan);
 const auto INFO_COLOR = fmt::fg(fmt::color::blue);
 const auto HIGHLIGHT_COLOR = fmt::fg(fmt::color::yellow);
-
 
 using json = nlohmann::json;
 
@@ -53,25 +52,28 @@ void waitForKey()
  * Attempts to parse the JSON string and format it with indentation.
  * Handles parsing errors gracefully.
  */
-std::string beautifyJson(const std::string& jsonString) {
-    try {
+std::string beautifyJson(const std::string &jsonString)
+{
+    try
+    {
         // Parse the input JSON string
         json parsedJson = json::parse(jsonString);
         // Format the beautified JSON with the highlight color
         return fmt::format(SUCCESS_COLOR, "{}\n", parsedJson.dump(4));
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception &e)
+    {
         // Return an error message in error color
         return fmt::format(ERROR_COLOR, "Error while beautifying JSON: {}\n", e.what());
     }
 }
 
-
-
 /**
  * Displays the main menu for the Deribit Trading Management System.
  * Lists all available operations for user interaction.
  */
-void displayMenu() {
+void displayMenu()
+{
     fmt::print(fmt::emphasis::bold | fmt::fg(fmt::color::cyan), "--- Deribit Trading System Menu ---\n");
     fmt::print(fmt::fg(fmt::color::yellow), "1. Place Order\n");
     fmt::print(fmt::fg(fmt::color::yellow), "2. Modify Order\n");
@@ -84,8 +86,6 @@ void displayMenu() {
     fmt::print(fmt::fg(fmt::color::yellow), "9. Exit\n");
     fmt::print(fmt::fg(fmt::color::green), "Enter your choice: ");
 }
-
-
 
 int main()
 {
@@ -170,9 +170,14 @@ int main()
             std::cin >> price;
             std::cin.ignore();
 
+            auto start = std::chrono::high_resolution_clock::now();
             std::string response = orderManager.placeOrder(instrument, side, amount, price);
+            auto end = std::chrono::high_resolution_clock::now();
+
             std::cout << fmt::format(SUCCESS_COLOR, "Order Placement Response:\n")
                       << beautifyJson(response) << "\n";
+            fmt::print(INFO_COLOR, "Order Placement Latency: {} ms\n",
+                       std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
             break;
         }
 
@@ -192,9 +197,14 @@ int main()
             std::cin >> newPrice;
             std::cin.ignore();
 
+            auto start = std::chrono::high_resolution_clock::now();
             std::string response = orderManager.modifyOrder(orderId, newAmount, newPrice);
+            auto end = std::chrono::high_resolution_clock::now();
+
             std::cout << fmt::format(SUCCESS_COLOR, "Modify Order Response:\n")
                       << beautifyJson(response) << "\n";
+            fmt::print(INFO_COLOR, "Modify Order Latency: {} ms\n",
+                       std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
             break;
         }
 
@@ -208,9 +218,14 @@ int main()
             std::cout << fmt::format(HIGHLIGHT_COLOR, "Enter order ID to cancel: ");
             std::getline(std::cin, orderId);
 
+            auto start = std::chrono::high_resolution_clock::now();
             std::string response = orderManager.cancelOrder(orderId);
+            auto end = std::chrono::high_resolution_clock::now();
+
             std::cout << fmt::format(SUCCESS_COLOR, "Cancel Order Response:\n")
                       << beautifyJson(response) << "\n";
+            fmt::print(INFO_COLOR, "Cancel Order Latency: {} ms\n",
+                       std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
             break;
         }
 
@@ -224,18 +239,24 @@ int main()
             std::cout << fmt::format(HIGHLIGHT_COLOR, "Enter instrument name (e.g., BTC-PERPETUAL): ");
             std::getline(std::cin, instrument);
 
+            auto start = std::chrono::high_resolution_clock::now();
             std::string response = orderManager.getAllOrders(instrument);
+            auto end = std::chrono::high_resolution_clock::now();
+
             if (response.empty())
             {
                 std::cerr << fmt::format(ERROR_COLOR, "Failed to fetch orders. No response received.\n");
                 break;
             }
 
-            try {
+            try
+            {
                 auto responseJson = json::parse(response);
-                if (responseJson.contains("result") && !responseJson["result"].empty()) {
+                if (responseJson.contains("result") && !responseJson["result"].empty())
+                {
                     fmt::print(fmt::emphasis::bold | fmt::fg(fmt::color::cyan), "\n--- Open Orders ---\n");
-                    for (const auto& order : responseJson["result"]) {
+                    for (const auto &order : responseJson["result"])
+                    {
                         fmt::print(fmt::fg(fmt::color::yellow), "Order ID: {}\n", order.value("order_id", "N/A"));
                         fmt::print(fmt::fg(fmt::color::green), "Instrument: {}\n", order.value("instrument_name", "N/A"));
                         fmt::print(fmt::fg(fmt::color::blue), "Amount: {}\n", order.value("amount", 0.0));
@@ -243,15 +264,20 @@ int main()
                         fmt::print(fmt::fg(fmt::color::red), "Direction: {}\n", order.value("direction", "N/A"));
                         fmt::print(fmt::emphasis::bold | fmt::fg(fmt::color::white), "-----------------------------\n");
                     }
-                } else {
+                }
+                else
+                {
                     fmt::print(fmt::fg(fmt::color::red), "No open orders found for instrument: {}\n", instrument);
                 }
-            } catch (const std::exception& e) {
+            }
+            catch (const std::exception &e)
+            {
                 fmt::print(fmt::fg(fmt::color::red), "Error parsing JSON response: {}\n", e.what());
             }
 
+            fmt::print(INFO_COLOR, "Order Fetch Latency: {} ms\n",
+                       std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
             break;
-
         }
 
         case 5: // Get Account Summary
@@ -259,9 +285,14 @@ int main()
             /*
              * Fetches the account summary, including balance and equity details.
              */
+            auto start = std::chrono::high_resolution_clock::now();
             std::string response = accountManager.getAccountSummary();
+            auto end = std::chrono::high_resolution_clock::now();
+
             std::cout << fmt::format(SUCCESS_COLOR, "Account Summary:\n")
                       << beautifyJson(response) << "\n";
+            fmt::print(INFO_COLOR, "Account Summary Latency: {} ms\n",
+                       std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
             break;
         }
 
@@ -270,9 +301,14 @@ int main()
             /*
              * Fetches all current open positions for the user.
              */
+            auto start = std::chrono::high_resolution_clock::now();
             std::string response = accountManager.getPositions();
+            auto end = std::chrono::high_resolution_clock::now();
+
             std::cout << fmt::format(SUCCESS_COLOR, "Current Positions:\n")
                       << beautifyJson(response) << "\n";
+            fmt::print(INFO_COLOR, "Position Fetch Latency: {} ms\n",
+                       std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
             break;
         }
 
@@ -286,9 +322,14 @@ int main()
             std::cout << fmt::format(HIGHLIGHT_COLOR, "Enter instrument name for order book (e.g., BTC-PERPETUAL): ");
             std::getline(std::cin, instrument);
 
+            auto start = std::chrono::high_resolution_clock::now();
             std::string response = marketDataManager.getOrderBook(instrument);
+            auto end = std::chrono::high_resolution_clock::now();
+
             std::cout << fmt::format(SUCCESS_COLOR, "Order Book:\n")
                       << beautifyJson(response) << "\n";
+            fmt::print(INFO_COLOR, "Order Book Fetch Latency: {} ms\n",
+                       std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
             break;
         }
 
@@ -304,7 +345,14 @@ int main()
 
             WebSocketClient::Config wsConfig{"test.deribit.com", "443", "/ws/api/v2"};
             WebSocketClient wsClient(wsConfig);
+
+            auto start = std::chrono::high_resolution_clock::now();
             wsClient.connect();
+            auto end = std::chrono::high_resolution_clock::now();
+
+            fmt::print(SUCCESS_COLOR, "WebSocket Connected!\n");
+            fmt::print(INFO_COLOR, "WebSocket Connection Latency: {} ms\n",
+                       std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
 
             json subscribeMessage = {
                 {"jsonrpc", "2.0"},
@@ -313,15 +361,12 @@ int main()
 
             wsClient.send(subscribeMessage.dump());
 
-            std::thread receiveThread([&wsClient, &keepRunning]()
-            {
+            std::thread receiveThread([&wsClient, &keepRunning](){
                 while (keepRunning)
                 {
-                    wsClient.receive([](const std::string &message){ 
-                        std::cout << fmt::format(SUCCESS_COLOR, "Real-time Data: {}\n", beautifyJson(message)); 
-                    });
-                }
-            });
+                    wsClient.receive([](const std::string &message)
+                                    { std::cout << fmt::format(SUCCESS_COLOR, "Real-time Data: {}\n", beautifyJson(message)); });
+                } });
 
             std::cout << fmt::format(INFO_COLOR, "Press Enter to stop WebSocket stream...\n");
             std::cin.get();
