@@ -27,6 +27,8 @@ A robust trading management system that interacts with the **Deribit API** to ma
 7. **Robust Logging**:
    - Print requests and responses for debugging.
    - Graceful error handling and cleanup.
+8. **Latency Measurement**:
+   - Measure and display latency metrics for order placement, market data processing, WebSocket message propagation, and the trading loop.
 
 ---
 
@@ -85,7 +87,7 @@ DeribitTest_TradeManagementSystem/
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/username/DeribitTest_TradeManagementSystem.git
+   git clone https://github.com/sanghaibiraj/DeribitTest_TradeManagementSystem.git
    cd DeribitTest_TradeManagementSystem
    ```
 
@@ -163,6 +165,8 @@ DeribitTest_TradeManagementSystem/
    - Check internet connectivity or API credentials if CURL fails.
 3. **JSON Parsing Errors**:
    - Ensure the API response structure matches the parsing logic.
+4. **Latency Monitoring**:
+   - Use logged timestamps to identify performance bottlenecks.
 
 ---
 

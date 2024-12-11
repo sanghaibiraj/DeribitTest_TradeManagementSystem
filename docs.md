@@ -1,7 +1,6 @@
+### **Trading Management System Documentation**
 
 ---
-
-# **Trading Management System Documentation**
 
 ## **Overview**
 
@@ -107,6 +106,20 @@ This project is a **Trading Management System** designed to interact with the De
 
 ---
 
+## **Latency Metrics**
+
+The following metrics include latency benchmarking results:
+
+- **Order Placement Latency**: 602 ms
+- **Modify Order Latency**: 593 ms
+- **Order Fetch Latency**: 548 ms
+- **Cancel Order Latency**: 540 ms
+- **Account Summary Latency**: 557 ms
+- **Position Fetch Latency**: 610 ms
+- **Order Book Fetch Latency**: 582 ms
+
+---
+
 ## **Dependencies**
 
 ### **Libraries Used**
@@ -121,11 +134,6 @@ This project is a **Trading Management System** designed to interact with the De
    - Provides asynchronous networking and WebSocket functionality.
    - Enables secure WebSocket connections using SSL.
 
-### **Installation**
-- Install required dependencies using your package manager:
-  ```bash
-  sudo apt install libcurl4-openssl-dev libboost-all-dev
-  ```
 
 ---
 
@@ -133,7 +141,7 @@ This project is a **Trading Management System** designed to interact with the De
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/your-repo-url.git
+   git clone https://github.com/sanghaibiraj/DeribitTest_TradeManagementSystem.git
    cd DeribitTest_TradeManagementSystem
    ```
 
