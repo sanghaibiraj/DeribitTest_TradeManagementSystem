@@ -1,9 +1,8 @@
-
 ---
 
 # **Deribit Test Trading Management System**
 
-A robust trading management system that interacts with the **Deribit API** to manage user authentication, order placement, modification, cancellation, and real-time market data streaming. Built with **C++**, it uses **Boost.Beast**, **libcurl**, and **nlohmann/json** for WebSocket communication, HTTP requests, and JSON handling, respectively.
+A robust trading management system that interacts with the **Deribit API** to manage user authentication, order placement, modification, cancellation, and real-time market data streaming. Built with **C++**, it uses **Boost.Beast**, **libcurl**, **fmt**, and **nlohmann/json** for WebSocket communication, HTTP requests, JSON handling, and colorful formatted output, respectively.
 
 ---
 
@@ -23,7 +22,9 @@ A robust trading management system that interacts with the **Deribit API** to ma
 5. **Real-Time Market Streaming**:
    - Subscribe to real-time market data updates using WebSocket.
    - Broadcast updates to WebSocket clients.
-6. **Robust Logging**:
+6. **Beautified Output**:
+   - Use the **fmt** library to enhance console output with formatted and colorful data presentation.
+7. **Robust Logging**:
    - Print requests and responses for debugging.
    - Graceful error handling and cleanup.
 
@@ -35,6 +36,7 @@ A robust trading management system that interacts with the **Deribit API** to ma
 - **Boost.Beast**: WebSocket client implementation.
 - **libcurl**: HTTP client for interacting with the Deribit API.
 - **nlohmann/json**: JSON handling.
+- **fmt**: Colorful formatted output.
 - **CMake**: Build system.
 - **OpenSSL**: Secure SSL/TLS communication.
 - **pthread**: Threading for the WebSocket server.
@@ -75,30 +77,9 @@ DeribitTest_TradeManagementSystem/
 
 1. **Operating System**: Linux (Ubuntu recommended), macOS, or Windows with WSL.
 2. **Dependencies**:
-   - C++17 compiler (e.g., GCC 9+ or Clang 9+).
-   - CMake (version 3.14 or higher).
-   - Boost Libraries (including Boost.Beast and Boost.Asio).
-   - libcurl.
-   - OpenSSL.
-   - pthread.
+   - **None Pre-installed!** All required libraries will be fetched automatically using `CMake FetchContent`.
 
-### **Install Dependencies**
-
-For Ubuntu:
-```bash
-sudo apt update
-sudo apt install -y build-essential cmake libboost-all-dev libssl-dev libcurl4-openssl-dev
-```
-
-For Fedora:
-```bash
-sudo dnf install gcc-c++ cmake boost-devel openssl-devel libcurl-devel
-```
-
-For macOS (using Homebrew):
-```bash
-brew install cmake boost openssl curl
-```
+---
 
 ### **Build the Project**
 
@@ -144,11 +125,11 @@ brew install cmake boost openssl curl
    1. Place Order
    2. Modify Order
    3. Cancel Order
-   4. Get Account Summary
-   5. Get Current Positions
-   6. Get Order Book
-   7. Start WebSocket Server for Real-Time Data
-   8. Get All Orders
+   4. Get All Orders
+   5. Get Account Summary
+   6. Get Current Positions
+   7. Get Order Book
+   8. Start WebSocket Server for Real-Time Data
    9. Exit
    ```
 
@@ -157,13 +138,13 @@ brew install cmake boost openssl curl
 - **Place Order**: Provide instrument name, side (`buy`/`sell`), amount, and price.
 - **Modify Order**: Modify an existing order by providing the `order_id`, new amount, and price.
 - **Cancel Order**: Cancel an order by providing its `order_id`.
-- **Get Account Summary**: Fetch and display account balance and equity details.
+- **Get All Orders**: Fetch and display all open orders for a specific instrument, beautified using **fmt** for readability.
+- **Get Account Summary**: Fetch and display account balance and equity details, with colorful output.
 - **Get Current Positions**: List all open positions.
 - **Get Order Book**: View the top 10 levels of the order book for an instrument.
 - **Start WebSocket Server**:
    - Connect to Deribit WebSocket API and subscribe to real-time updates.
    - Broadcast updates to WebSocket clients connected to the server.
-- **Get All Orders**: List all open orders for a specific instrument.
 
 ---
 
@@ -171,8 +152,6 @@ brew install cmake boost openssl curl
 
 1. The WebSocket client connects to `wss://test.deribit.com/ws/api/v2`.
 2. Subscribes to channels like `book.BTC-PERPETUAL.100ms`.
-3. Streams data to a local WebSocket server running on `localhost:9000`.
-4. External clients can connect to the server for live updates.
 
 ---
 
@@ -195,5 +174,12 @@ brew install cmake boost openssl curl
    - Add more subscription management options.
 3. **Support for Historical Data**:
    - Fetch past trades and orders for analytics.
+4. **Testing Framework**:
+   - Add unit tests for individual components to improve reliability.
+5. **API Rate Limiting**:
+   - Handle API rate limits more gracefully with retries and exponential backoff.
+6. **Automated Deployment**:
+   - Create Docker images for easy deployment across platforms.
 
 ---
+
